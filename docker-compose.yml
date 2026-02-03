@@ -1,27 +1,29 @@
+version: '3.8'
+
 services:
   webserver:
-    image: yiisoftware/yii2-php:8.3-apache
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    # Монтируем текущую папку, чтобы изменения в коде сразу отражались в контейнере
     volumes:
-      - ~/.composer-docker/cache:/root/.composer/cache:delegated
       - ./:/app:delegated
+      # Кэш композитора для ускорения, если решите запустить установку вручную
+      - ~/.composer-docker/cache:/root/.composer/cache:delegated
     ports:
       - '8000:80'
     depends_on:
       - postgres
-    # Добавляем установку зависимостей прямо перед выполнением основного скрипта
+    # Теперь выполняем только финальный скрипт настройки БД/прав
     command: >
-      bash -c "
-        composer install && 
-        npm ci && 
-        npm run css-dev && 
-        npm run dev && 
-        bash refresh.sh
-      "
+      bash -c "chmod +x refresh.sh && ./refresh.sh"
     environment:
       PHP_ENABLE_XDEBUG: 1
       XDEBUG_MODE: "coverage"
-      # Добавляем переменные окружения, чтобы скрипты знали куда стучаться
-      DATABASE_URL: "postgres://vacation:secret@postgres:5432/app-vacations"
+      # Параметры подключения к БД (подставьте свои из config/db.php)
+      DB_DSN: "pgsql:host=postgres;port=5432;dbname=app-vacations"
+      DB_USER: "vacation"
+      DB_PASSWORD: "secret"
 
   postgres:
     image: postgres:17.0
@@ -31,13 +33,8 @@ services:
       POSTGRES_PASSWORD: "secret"
     ports:
       - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-  # Раскомментировать для запуска тестов
-  # postgres-test:
-  #   image: postgres:17.0
-  #   environment:
-  #     POSTGRES_DB: "app-vacations-test"
-  #     POSTGRES_USER: "vacation"
-  #     POSTGRES_PASSWORD: "secret"
-  #   ports:
-  #     - '5433:5432'
+volumes:
+  postgres_data:
