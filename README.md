@@ -1,5 +1,8 @@
 # График отпусков
 
+Всё развёртывание добавлено в ДОКЕР
+
+
 [![Build & Deploy](https://github.com/toatall/app-vacations/actions/workflows/deploy.yml/badge.svg?event=push)](https://github.com/toatall/app-vacations/actions/workflows/deploy.yml)
 
 Приложение для демонстрации информации об отпусках.
@@ -32,9 +35,23 @@
 Скопировать репозиторий локально:
 
 ```sh
-git clone https://github.com/toatall/app-vacations app-vacations
+git clone https://github.com/User-e1/graphik_otpuska_app-vacations app-vacations
 cd app-vacations
 ```
+
+## ОСТАЛЬНОЕ ИНТЕГРИРОВАНО В АВТОРАЗВЁРТЫВАНИЕ ЧЕРЕЗ ДОКЕР
+
+```sh
+docker compose up -d --build
+```
+
+
+Запустить docker
+```sh
+docker-compose up
+```
+
+
 
 Установить composer, npm зависимости, скомпилировать assets:
 
