@@ -51,6 +51,22 @@ docker compose up -d --build
 docker-compose up
 ```
 
+Все готово, перейти на страницу входа и ввести учетные данные:
+
+http://hostname:8000/
+
+- **Username:** admin@example.com
+- **Password:**
+
+
+
+====
+====
+=== 
+
+
+
+## ТОЛЬКО ЕСЛИ СТАВИТЬ В РУЧНУЮ
 
 
 Установить composer, npm зависимости, скомпилировать assets:
