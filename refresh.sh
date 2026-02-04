@@ -1,4 +1,13 @@
 while !</dev/tcp/postgres/5432; do sleep 1; done;
+# Создаем базовые папки и вложенную папку для Inertia
+mkdir -p runtime/sessions runtime/cache web/assets/inertia
+
+# Устанавливаем владельца и права (777 для гарантированного доступа)
+chown -R www-data:www-data runtime web/assets
+chmod -R 777 runtime web/assets
+
+# Дальше ваши команды миграций...
+echo "--- Running migrations ---"
 
 php yii migrate/down --interactive=0 9;
 php yii migrate/down --migrationPath=@yii/rbac/migrations --interactive=0 4;
