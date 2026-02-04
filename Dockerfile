@@ -1,40 +1,45 @@
-# ЭТАП 1: Установка PHP зависимостей (Composer)
+# ЭТАП 1: PHP зависимости
 FROM composer:latest AS composer_stage
 WORKDIR /app
 COPY composer.json composer.lock ./
-# Устанавливаем зависимости без запуска скриптов (так как кода еще нет в этом слое)
-RUN composer install --no-scripts --no-autoloader --no-interaction --ignore-platform-reqs
+# Устанавливаем всё, включая автозагрузчик, на этом этапе
+RUN composer install --no-scripts --no-interaction --ignore-platform-reqs
 
-# ЭТАП 2: Установка JS зависимостей и компиляция
+# ЭТАП 2: JS зависимости
+
+
 FROM node:18-alpine AS node_stage
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-# Компилируем ассеты
-RUN npm run css-dev && npm run dev
+# Важно: запускаем сборку, которая генерирует файлы
+RUN npm run dev 
 
-# ЭТАП 3: Финальный образ (Apache + PHP 8.3)
+# ЭТАП 3: Финальный образ
 FROM yiisoftware/yii2-php:8.3-apache
+
+# Настройка окружения
+ENV APACHE_DOCUMENT_ROOT /app/web
 WORKDIR /app
 
-# Устанавливаем зависимости для работы с PostgreSQL (если их нет в базовом образе)
+# Установка расширений Postgres
 RUN apt-get update && apt-get install -y libpq-dev \
-    && docker-php-ext-install pdo pdo_postgres \
+    && docker-php-ext-install pdo pdo_pgsql \
     && rm -rf /var/lib/apt/lists/*
 
-# Копируем исходный код проекта
+# Копируем всё содержимое проекта
 COPY . .
 
-# Копируем вендоры из 1-го этапа
+# Копируем уже готовые vendor и web из предыдущих этапов
+# Это исключает необходимость запуска composer dump-autoloader в финальном слое
 COPY --from=composer_stage /app/vendor ./vendor
-
-# Копируем скомпилированные ассеты из 2-го этапа
-# В Yii2 это обычно папка web/assets или web/dist — проверьте ваш путь!
 COPY --from=node_stage /app/web ./web
 
-# Достраиваем автозагрузку Composer (теперь, когда код скопирован)
-RUN composer dump-autoloader --optimize
+# Права на папки и скрипт
+RUN chmod +x /app/refresh.sh && \
+    mkdir -p runtime web/assets && \
+    chmod -R 777 runtime web/assets
+    
+RUN sed -i 's|/var/www/html|/app/web|g' /etc/apache2/sites-available/000-default.conf
 
-# Делаем скрипт запуска исполняемым
-RUN chmod +x /app/refresh.sh
