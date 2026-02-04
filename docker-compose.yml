@@ -1,26 +1,22 @@
-version: '3.8'
-
 services:
   webserver:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
-    # Монтируем текущую папку, чтобы изменения в коде сразу отражались в контейнере
     volumes:
       - ./:/app:delegated
-      # Кэш композитора для ускорения, если решите запустить установку вручную
+      - /app/vendor
+      - /app/web/assets
       - ~/.composer-docker/cache:/root/.composer/cache:delegated
     ports:
       - '8000:80'
     depends_on:
       - postgres
-    # Теперь выполняем только финальный скрипт настройки БД/прав
     command: >
       bash -c "chmod +x refresh.sh && ./refresh.sh"
     environment:
       PHP_ENABLE_XDEBUG: 1
       XDEBUG_MODE: "coverage"
-      # Параметры подключения к БД (подставьте свои из config/db.php)
       DB_DSN: "pgsql:host=postgres;port=5432;dbname=app-vacations"
       DB_USER: "vacation"
       DB_PASSWORD: "secret"
